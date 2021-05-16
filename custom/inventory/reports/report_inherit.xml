@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<flectra>
+    <data>
+        <template id="stock.report_product">
+            <t t-call="web.html_container">
+                <t t-foreach="docs" t-as="o">
+                    <t t-call="web.external_layout">
+                        <div class="page">
+                            <div class="row">
+                                
+                                <div class="col-xs-3">
+                                    <div t-if="o.partner_id" name="partner_header">
+                                        <span><strong>Customer Name:</strong>
+                                        <div  t-field="o.partner_id"
+                                           t-options='{"widget": "contact", "fields": ["name"], "no_marker": True}'/>
+                                        <p t-if="o.sudo().partner_id.vat"><t t-esc="o.company_id.country_id.vat_label or 'TIN'"/>: <span t-field="o.sudo().partner_id.vat"/></p>
+                                        </span>
+                                        
+                                    </div>
+                                </div>
+                            </div>
+                            <br/>
+                            
+                            <h1 t-field="o.name" class="mt0 pull-left"/>
+                            <div class="clearfix"/>
+                
+                           
+                            <br/>
+                            <br/>
+                            <table class="table table-condensed" t-if="o.move_line_ids">
+                              <t t-set="has_barcode" t-value="any([move_lines.product_id and move_lines.product_id.sudo().barcode or move_lines.package_id for move_lines in o.move_line_ids])"/>
+                              <t t-set="has_serial_number" t-value="o.move_line_ids.filtered(lambda ml: ml.lot_id or ml.lot_name)" groups="stock.group_production_lot"/>
+                              <thead>
+                                <tr>
+                                    <th width="40%">Product</th>
+                                    <th  width="30%">Initial Demand</th>
+                                    <th  width="30%">Done Qty</th>                            
+                                </tr>
+                              </thead>
+                              <tbody>
+                                    <tr t-foreach="o.move_lines.sorted(key=lambda m: m.product_id.id)" t-as="move">
+                                        <td>
+                                            <span t-field="move.product_id.display_name"/><br/>
+                                            <span t-field="move.product_id.description_picking"/>
+                                        </td>
+                                        <td >
+                                            <span t-if="move.product_qty" t-field="move.product_qty"/>
+                                            <span t-if="not move.product_qty" t-esc="move.product_uom._compute_quantity(move.quantity_done, move.product_id.uom_id, rounding_method='HALF-UP')"/>
+                                            <span t-field="move.product_id.uom_id" groups="product.group_uom"/>
+                                        </td>
+                                        
+                                        <td >
+                                            <t t-if="move.move_line_ids">
+                                                <table width="100%">
+                                                    <tr t-foreach="move.move_line_ids.sorted(key=lambda ml: ml.location_id.id)" t-as="ml">
+                                                       
+                                                        <td width="100%">
+                                                            <t t-if="has_serial_number and ml.product_id.tracking != 'none'">
+                                                                <div class="col-xs-4">
+                                                                    <span t-field="ml.lot_id"/>
+                                                                    <span t-if="not ml.lot_id" t-field="ml.lot_name"/>
+                                                                </div>
+                                                            </t>
+                                                            <div class="col-xs-8">
+                                                                <span t-field="ml.qty_done"/>
+                                                                
+                                                            </div>
+                                                        </td>
+                                                        
+                                                    </tr>
+                                                </table>
+                                            </t>
+                                            <t t-else="">
+                                                <span>No reservation or quantity done yet.</span>
+                                            </t>
+                                        </td>
+                                    </tr>
+                              </tbody>
+                            </table>
+                        </div>
+                    </t>
+                 </t>
+             </t>
+        </template>
+    </data>
+</flectra>
